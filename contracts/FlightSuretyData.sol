@@ -77,6 +77,15 @@ contract FlightSuretyData {
         delete authorizedCaller[contractAddress];
     }
 
+    function isAuthorizedCaller(address contractAddress)
+                            public
+                            view
+                            requireContractOwner
+                            returns(bool)
+    {
+        return authorizedCaller[contractAddress] == 1;
+    }
+
     /**
     * @dev Get operating status of contract
     *

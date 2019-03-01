@@ -13,6 +13,13 @@ contract FlightSuretyData {
     bool private operational = true;                                    // Blocks all state changes throughout the contract if false
     mapping(address => uint256) private authorizedCaller;
 
+    struct Airline {
+        bool isRegistered;
+        bool isFounded;
+    }
+    mapping(address => Airline) private airlines;
+
+
     /********************************************************************************************/
     /*                                       EVENT DEFINITIONS                                  */
     /********************************************************************************************/
@@ -24,10 +31,14 @@ contract FlightSuretyData {
     */
     constructor
                                 (
+                                    address firstAirline
                                 )
                                 public
     {
         contractOwner = msg.sender;
+
+        // Create first Airline - but without funding
+        airlines[firstAirline] =  Airline({isRegistered: true, isFounded: false});
     }
 
     /********************************************************************************************/
@@ -39,7 +50,7 @@ contract FlightSuretyData {
 
     modifier requireIsCallerAuthorized()
     {
-        require(authorizedCaller[msg.sender] == 1, "Caller is not contract owner");
+        require(authorizedCaller[msg.sender] == 1 || msg.sender == contractOwner, "Caller is not contract owner");
         _;
     }
 
@@ -60,6 +71,12 @@ contract FlightSuretyData {
     modifier requireContractOwner()
     {
         require(msg.sender == contractOwner, "Caller is not contract owner");
+        _;
+    }
+
+    modifier requireIsCallerAirlineFounded()
+    {
+        require(airlines[msg.sender].isFounded, "Caller can not participate in contract until it submits funding");
         _;
     }
 
@@ -119,6 +136,20 @@ contract FlightSuretyData {
     /*                                     SMART CONTRACT FUNCTIONS                             */
     /********************************************************************************************/
 
+
+    function isAirline
+                            (
+                                address airline
+                            )
+                            external
+                            view
+                            requireIsOperational
+                            returns (bool)
+
+    {
+        return airlines[airline].isRegistered;
+    }
+
    /**
     * @dev Add an airline to the registration queue
     *      Can only be called from FlightSuretyApp contract
@@ -126,11 +157,16 @@ contract FlightSuretyData {
     */
     function registerAirline
                             (
+                                address airline
                             )
                             external
                             requireIsOperational
                             requireIsCallerAuthorized
+                            requireIsCallerAirlineFounded
+                            returns(bool success)
     {
+        airlines[airline] =  Airline({isRegistered: true, isFounded: false});
+        return airlines[airline].isRegistered;
     }
 
 

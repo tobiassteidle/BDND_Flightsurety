@@ -24,6 +24,11 @@ contract('Flight Surety Tests', async (accounts) => {
   /* Operations and Settings                                                              */
   /****************************************************************************************/
 
+  it(`(initial) first airline is registered when contract is deployed.`, async function () {
+      let result = await config.flightSuretyData.isAirline.call(config.firstAirline);
+      assert.equal(result, true, "First airline not registred on deployment");
+  });
+
   it(`(multiparty) has correct initial isOperational() value`, async function () {
 
     // Get operating status
@@ -86,18 +91,34 @@ contract('Flight Surety Tests', async (accounts) => {
     let newAirline = accounts[2];
 
     // ACT
+    let reverted = false;
     try {
         await config.flightSuretyApp.registerAirline(newAirline, {from: config.firstAirline});
     }
     catch(e) {
-
+        reverted = true;
     }
-    let result = await config.flightSuretyData.isAirline.call(newAirline);
 
     // ASSERT
-    assert.equal(result, false, "Airline should not be able to register another airline if it hasn't provided funding");
-
+    assert.equal(reverted, true, "Airline should not be able to register another airline if it hasn't provided funding");
   });
 
 
+/*
+    it('(airline) fund first airline', async () => {
+
+        // ACT
+        let reverted = false;
+        try {
+            await config.flightSuretyApp.registerAirline(newAirline, {from: config.firstAirline});
+        }
+        catch(e) {
+            reverted = true;
+        }
+
+        // ASSERT
+        assert.equal(reverted, true, "Airline should not be able to register another airline if it hasn't provided funding");
+    });
+
+*/
 });

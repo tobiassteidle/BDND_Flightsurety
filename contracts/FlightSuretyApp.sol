@@ -16,6 +16,9 @@ contract FlightSuretyApp {
     /*                                       DATA VARIABLES                                     */
     /********************************************************************************************/
 
+    // Fee to be paid when registering oracle
+    uint256 public constant AIRLINE_SEED_FUND = 10 ether;
+
     // Flight status codees
     uint8 private constant STATUS_CODE_UNKNOWN = 0;
     uint8 private constant STATUS_CODE_ON_TIME = 10;
@@ -98,19 +101,18 @@ contract FlightSuretyApp {
     /*                                     SMART CONTRACT FUNCTIONS                             */
     /********************************************************************************************/
 
-
    /**
     * @dev Add an airline to the registration queue
     *
     */
     function registerAirline
                             (
+                                address airline
                             )
                             external
-                            pure
                             returns(bool success, uint256 votes)
     {
-        return (success, 0);
+        return (flightSuretyData.registerAirline(airline), 0);
     }
 
 
@@ -340,5 +342,6 @@ contract FlightSuretyApp {
 }
 
 contract FlightSuretyData {
-//    function updateEmployee(string id, uint256 sales, uint256 bonus) external;
+
+    function registerAirline(address airline) external returns (bool success);
 }

@@ -16,8 +16,8 @@ contract FlightSuretyApp {
     /*                                       DATA VARIABLES                                     */
     /********************************************************************************************/
 
-    // Fee to be paid when registering oracle
-    uint256 public constant AIRLINE_SEED_FUND = 10 ether;
+    uint256 private constant AIRLINE_SEED_FUND = 10 ether;
+    uint256 private constant MULTIPARTY_CONSENSUS_THRESHOLD = 4;
 
     // Flight status codees
     uint8 private constant STATUS_CODE_UNKNOWN = 0;
@@ -38,6 +38,7 @@ contract FlightSuretyApp {
     }
     mapping(bytes32 => Flight) private flights;
 
+    uint8 private airlinesRegisteredCount;
 
     /********************************************************************************************/
     /*                                       FUNCTION MODIFIERS                                 */
@@ -83,6 +84,7 @@ contract FlightSuretyApp {
     {
         contractOwner = msg.sender;
         flightSuretyData = FlightSuretyData(dataContract);
+        airlinesRegisteredCount = 1;
     }
 
     /********************************************************************************************/
@@ -112,7 +114,16 @@ contract FlightSuretyApp {
                             external
                             returns(bool success, uint256 votes)
     {
-        return (flightSuretyData.registerAirline(airline), 0);
+        if(airlinesRegisteredCount < MULTIPARTY_CONSENSUS_THRESHOLD) {
+            success = flightSuretyData.registerAirline(msg.sender, airline);
+            if(success) {
+                airlinesRegisteredCount++;
+            }
+        } else {
+            success = false;
+        }
+
+        votes = 0;
     }
 
     function fund
@@ -121,8 +132,11 @@ contract FlightSuretyApp {
                             external
                             payable
     {
-        require(msg.value >= AIRLINE_SEED_FUND, "Seed fund required or to low.");
-        flightSuretyData.fund();
+        require(msg.value >= AIRLINE_SEED_FUND, "Seed fund required or to low");
+
+        // Transfer Fund to Data Contract
+        address(flightSuretyData).transfer(msg.value);
+        flightSuretyData.fundAirline(msg.sender);
     }
 
 
@@ -353,6 +367,6 @@ contract FlightSuretyApp {
 
 contract FlightSuretyData {
 
-    function registerAirline(address airline) external returns (bool success);
-    function fund() public payable;
+    function registerAirline(address originSender, address airline) external returns (bool success);
+    function fundAirline(address airline) external;
 }

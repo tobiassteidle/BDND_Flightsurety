@@ -19,7 +19,6 @@ contract FlightSuretyData {
     }
     mapping(address => Airline) private airlines;
 
-
     /********************************************************************************************/
     /*                                       EVENT DEFINITIONS                                  */
     /********************************************************************************************/
@@ -74,9 +73,9 @@ contract FlightSuretyData {
         _;
     }
 
-    modifier requireIsCallerAirlineFounded()
+    modifier requireIsCallerAirlineFounded(address originSender)
     {
-        require(airlines[msg.sender].isFounded, "Caller can not participate in contract until it submits funding");
+        require(airlines[originSender].isFounded, "Caller can not participate in contract until it submits funding");
         _;
     }
 
@@ -136,6 +135,17 @@ contract FlightSuretyData {
     /*                                     SMART CONTRACT FUNCTIONS                             */
     /********************************************************************************************/
 
+    function getBalance
+                            (
+                            )
+                            public
+                            view
+                            requireIsOperational
+                            requireContractOwner
+                            returns (uint256)
+    {
+        return address(this).balance;
+    }
 
     function isAirline
                             (
@@ -157,18 +167,30 @@ contract FlightSuretyData {
     */
     function registerAirline
                             (
+                                address originSender,
                                 address airline
                             )
                             external
                             requireIsOperational
                             requireIsCallerAuthorized
-                            requireIsCallerAirlineFounded
+                            requireIsCallerAirlineFounded(originSender)
                             returns(bool success)
     {
+        require(!airlines[airline].isRegistered, "Airline already registred");
         airlines[airline] =  Airline({isRegistered: true, isFounded: false});
         return airlines[airline].isRegistered;
     }
 
+    function fundAirline
+                            (
+                                address airline
+                            )
+                            external
+                            requireIsOperational
+                            requireIsCallerAuthorized
+    {
+        airlines[airline].isFounded = true;
+    }
 
    /**
     * @dev Buy insurance for a flight
@@ -222,7 +244,6 @@ contract FlightSuretyData {
                             public
                             payable
                             requireIsOperational
-                            //requireIsCallerAuthorized
     {
     }
 

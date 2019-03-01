@@ -123,14 +123,17 @@ contract('Flight Surety Tests', async (accounts) => {
 
     // ACT
     let reverted = false;
+    let balance = 0;
     try {
-        await config.flightSuretyApp.fund.call({from: config.firstAirline, value: Web3Utils.toWei("10", "ether"), gasPrice: 0});
+        await config.flightSuretyApp.fund({from: config.firstAirline, value: Web3Utils.toWei("10", "ether"), gasPrice: 0});
+        balance = await config.flightSuretyData.getBalance({from: config.owner});
     }
     catch(e) {
         reverted = true;
     }
 
     // ASSERT
+    assert.equal(balance.toNumber(), Web3Utils.toWei("10", "ether"), "Unexcected Airline balance");
     assert.equal(reverted, false, "Airline seed not accepted");
   });
 
@@ -142,14 +145,33 @@ contract('Flight Surety Tests', async (accounts) => {
     // ACT
     let reverted = false;
     try {
-        await config.flightSuretyApp.registerAirline.call(newAirline, {from: config.firstAirline});
+        await config.flightSuretyApp.registerAirline(newAirline, {from: config.firstAirline});
+    }
+    catch(e) {
+        console.log(e);
+        reverted = true;
+    }
+
+    // ASSERT
+    assert.equal(reverted, false, "Airline should be able to register another airline");
+  });
+
+  it('(airline) prevent registerAirline() on already registred airline', async () => {
+
+    // ARRANGE
+    let newAirline = accounts[2];
+
+    // ACT
+    let reverted = false;
+    try {
+        await config.flightSuretyApp.registerAirline(newAirline, {from: config.firstAirline});
     }
     catch(e) {
         reverted = true;
     }
 
     // ASSERT
-    assert.equal(reverted, false, "Airline should be able to register another airline");
+    assert.equal(reverted, true, "Airline should not be registred twice");
   });
 
 });

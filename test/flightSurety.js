@@ -1,3 +1,4 @@
+var Web3Utils = require('web3-utils');
 
 var Test = require('../config/testConfig.js');
 var BigNumber = require('bignumber.js');
@@ -93,7 +94,7 @@ contract('Flight Surety Tests', async (accounts) => {
     // ACT
     let reverted = false;
     try {
-        await config.flightSuretyApp.registerAirline(newAirline, {from: config.firstAirline});
+        await config.flightSuretyApp.registerAirline.call(newAirline, {from: config.firstAirline});
     }
     catch(e) {
         reverted = true;
@@ -103,22 +104,52 @@ contract('Flight Surety Tests', async (accounts) => {
     assert.equal(reverted, true, "Airline should not be able to register another airline if it hasn't provided funding");
   });
 
+  it('(airline) fund first airline (seed fund to low)', async () => {
 
-/*
-    it('(airline) fund first airline', async () => {
+    // ACT
+    let reverted = false;
+    try {
+        await config.flightSuretyApp.fund.call({from: config.firstAirline, value: Web3Utils.toWei("9.9", "ether"), gasPrice: 0});
+    }
+    catch(e) {
+        reverted = true;
+    }
 
-        // ACT
-        let reverted = false;
-        try {
-            await config.flightSuretyApp.registerAirline(newAirline, {from: config.firstAirline});
-        }
-        catch(e) {
-            reverted = true;
-        }
+    // ASSERT
+    assert.equal(reverted, true, "Airline seed fund should reach the minimum of 10 ether.");
+  });
 
-        // ASSERT
-        assert.equal(reverted, true, "Airline should not be able to register another airline if it hasn't provided funding");
-    });
+  it('(airline) fund first airline (seed reached)', async () => {
 
-*/
+    // ACT
+    let reverted = false;
+    try {
+        await config.flightSuretyApp.fund.call({from: config.firstAirline, value: Web3Utils.toWei("10", "ether"), gasPrice: 0});
+    }
+    catch(e) {
+        reverted = true;
+    }
+
+    // ASSERT
+    assert.equal(reverted, false, "Airline seed not accepted");
+  });
+
+  it('(airline) can register an Airline using registerAirline() if it is funded', async () => {
+
+    // ARRANGE
+    let newAirline = accounts[2];
+
+    // ACT
+    let reverted = false;
+    try {
+        await config.flightSuretyApp.registerAirline.call(newAirline, {from: config.firstAirline});
+    }
+    catch(e) {
+        reverted = true;
+    }
+
+    // ASSERT
+    assert.equal(reverted, false, "Airline should be able to register another airline");
+  });
+
 });

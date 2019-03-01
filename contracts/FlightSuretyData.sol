@@ -222,7 +222,7 @@ contract FlightSuretyData {
                             public
                             payable
                             requireIsOperational
-                            requireIsCallerAuthorized
+                            //requireIsCallerAuthorized
     {
     }
 

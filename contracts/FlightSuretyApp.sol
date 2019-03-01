@@ -115,6 +115,16 @@ contract FlightSuretyApp {
         return (flightSuretyData.registerAirline(airline), 0);
     }
 
+    function fund
+                            (
+                            )
+                            external
+                            payable
+    {
+        require(msg.value >= AIRLINE_SEED_FUND, "Seed fund required or to low.");
+        flightSuretyData.fund();
+    }
+
 
    /**
     * @dev Register a future flight for insuring.
@@ -344,4 +354,5 @@ contract FlightSuretyApp {
 contract FlightSuretyData {
 
     function registerAirline(address airline) external returns (bool success);
+    function fund() public payable;
 }

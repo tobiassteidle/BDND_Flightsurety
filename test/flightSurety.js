@@ -133,7 +133,7 @@ contract('Flight Surety Tests', async (accounts) => {
     }
 
     // ASSERT
-    assert.equal(balance.toNumber(), Web3Utils.toWei("10", "ether"), "Unexcected Airline balance");
+    assert.equal(balance.toString(10), Web3Utils.toWei("10", "ether"), "Unexcected Airline balance");
     assert.equal(reverted, false, "Airline seed not accepted");
   });
 
@@ -201,7 +201,7 @@ contract('Flight Surety Tests', async (accounts) => {
     }
 
       console.log(await config.flightSuretyApp.airlinesRegisteredCount.call());
-/*
+
       console.log(airline2Status[2].toNumber() + " " + airline2Status[3]);
       console.log(airline3Status[2].toNumber() + " " + airline3Status[3]);
       console.log(airline4Status[2].toNumber() + " " + airline4Status[3]);
@@ -213,7 +213,7 @@ contract('Flight Surety Tests', async (accounts) => {
     assert.equal(airline3Status[0], true, "Can not register Airline 3");
     assert.equal(airline4Status[0], true, "Can not register Airline 4");
     assert.equal(airline5Status[0], false, "Threshold reached for Airline 5");
-*/
+
 
   });
 

@@ -112,10 +112,8 @@ contract FlightSuretyApp {
                                 address airline
                             )
                             external
-                            returns(bool, uint256, uint8, address)
     {
         bool success = false;
-        uint256 votes = 0;
 
         if(airlinesRegisteredCount < MULTIPARTY_CONSENSUS_THRESHOLD) {
             // Try to register airline
@@ -124,10 +122,8 @@ contract FlightSuretyApp {
                 airlinesRegisteredCount++;
             }
         } else {
-            success = false;
+            // HIER CONSENSUS
         }
-
-        return (success, votes, airlinesRegisteredCount, airline);
     }
 
     function fund

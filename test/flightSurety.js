@@ -1,4 +1,6 @@
 var Web3Utils = require('web3-utils');
+var Web3 = require('web3')
+web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
 
 var Test = require('../config/testConfig.js');
 var BigNumber = require('bignumber.js');
@@ -179,42 +181,23 @@ contract('Flight Surety Tests', async (accounts) => {
     let newAirline2 = accounts[3];
     let newAirline3 = accounts[4];
     let newAirline4 = accounts[5];
-    let newAirline5 = accounts[6];
-
-    let airline2Status = null;
-    let airline3Status = null;
-    let airline4Status = null;
-    let airline5Status = null;
 
     // ACT
     let registerBelowThreshold = true;
 
     try {
-        airline2Status = await config.flightSuretyApp.registerAirline(newAirline2, {from: config.firstAirline});
-        airline3Status = await config.flightSuretyApp.registerAirline(newAirline3, {from: config.firstAirline});
-        airline4Status = await config.flightSuretyApp.registerAirline(newAirline4, {from: config.firstAirline});
-        airline5Status = await config.flightSuretyApp.registerAirline(newAirline5, {from: config.firstAirline});
+        await config.flightSuretyApp.registerAirline(newAirline2, {from: config.firstAirline});
+        await config.flightSuretyApp.registerAirline(newAirline3, {from: config.firstAirline});
+        await config.flightSuretyApp.registerAirline(newAirline4, {from: config.firstAirline});
     }
     catch(e) {
         registerBelowThreshold = false;
         console.log(e);
     }
 
-      console.log(await config.flightSuretyApp.airlinesRegisteredCount.call());
-
-      console.log(airline2Status[2].toNumber() + " " + airline2Status[3]);
-      console.log(airline3Status[2].toNumber() + " " + airline3Status[3]);
-      console.log(airline4Status[2].toNumber() + " " + airline4Status[3]);
-      console.log(airline5Status[2].toNumber() + " " + airline5Status[3]);
-
     // ASSERT
     assert.equal(registerBelowThreshold, true, "Can not register Airlines but should work");
-    assert.equal(airline2Status[0], true, "Can not register Airline 2");
-    assert.equal(airline3Status[0], true, "Can not register Airline 3");
-    assert.equal(airline4Status[0], true, "Can not register Airline 4");
-    assert.equal(airline5Status[0], false, "Threshold reached for Airline 5");
-
-
+    assert.equal(await config.flightSuretyApp.airlinesRegisteredCount.call(), 4, "Threshold ignored");
   });
 
 });

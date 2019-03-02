@@ -38,7 +38,7 @@ contract FlightSuretyApp {
     }
     mapping(bytes32 => Flight) private flights;
 
-    uint8 private airlinesRegisteredCount;
+    uint8 public airlinesRegisteredCount;
 
     /********************************************************************************************/
     /*                                       FUNCTION MODIFIERS                                 */
@@ -112,9 +112,13 @@ contract FlightSuretyApp {
                                 address airline
                             )
                             external
-                            returns(bool success, uint256 votes)
+                            returns(bool, uint256, uint8, address)
     {
+        bool success = false;
+        uint256 votes = 0;
+
         if(airlinesRegisteredCount < MULTIPARTY_CONSENSUS_THRESHOLD) {
+            // Try to register airline
             success = flightSuretyData.registerAirline(msg.sender, airline);
             if(success) {
                 airlinesRegisteredCount++;
@@ -123,7 +127,7 @@ contract FlightSuretyApp {
             success = false;
         }
 
-        votes = 0;
+        return (success, votes, airlinesRegisteredCount, airline);
     }
 
     function fund

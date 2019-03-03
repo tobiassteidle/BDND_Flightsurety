@@ -16,7 +16,7 @@ contract FlightSuretyApp {
     /*                                       DATA VARIABLES                                     */
     /********************************************************************************************/
 
-    uint256 private constant AIRLINE_SEED_FUND = 10 ether;
+    uint256 public constant AIRLINE_SEED_FUND = 10 ether;
     uint256 private constant MULTIPARTY_CONSENSUS_THRESHOLD = 4;
 
     // Flight status codees

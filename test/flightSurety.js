@@ -110,11 +110,12 @@ contract('Flight Surety Tests', async (accounts) => {
   });
 
   it('(airline) fund first airline (seed fund to low)', async () => {
+    let fund = await config.flightSuretyApp.AIRLINE_SEED_FUND.call();
 
     // ACT
     let reverted = false;
     try {
-        await config.flightSuretyApp.fund.call({from: config.firstAirline, value: Web3Utils.toWei("9.9", "ether"), gasPrice: 0});
+        await config.flightSuretyApp.fund.call({from: config.firstAirline, value: fund.toNumber()-1, gasPrice: 0});
     }
     catch(e) {
         reverted = true;
@@ -125,12 +126,13 @@ contract('Flight Surety Tests', async (accounts) => {
   });
 
   it('(airline) fund first airline (seed reached)', async () => {
+    let fund = await config.flightSuretyApp.AIRLINE_SEED_FUND.call();
 
     // ACT
     let reverted = false;
     let balance = 0;
     try {
-        await config.flightSuretyApp.fund({from: config.firstAirline, value: Web3Utils.toWei("10", "ether"), gasPrice: 0});
+        await config.flightSuretyApp.fund({from: config.firstAirline, value: fund.toString(), gasPrice: 0});
         balance = await config.flightSuretyData.getBalance({from: config.owner});
     }
     catch(e) {
@@ -139,7 +141,7 @@ contract('Flight Surety Tests', async (accounts) => {
     }
 
     // ASSERT
-    assert.equal(balance.toString(10), Web3Utils.toWei("10", "ether"), "Unexcected Airline balance");
+    assert.equal(balance.toString(10), fund.toString(), "Unexcected Airline balance");
     assert.equal(reverted, false, "Airline seed not accepted");
   });
 

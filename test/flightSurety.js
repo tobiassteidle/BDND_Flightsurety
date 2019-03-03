@@ -35,7 +35,7 @@ contract('Flight Surety Tests', async (accounts) => {
   it(`(multiparty) has correct initial isOperational() value`, async function () {
 
     // Get operating status
-    let status = await config.flightSuretyData.isOperational.call();
+    let status = await config.flightSuretyApp.isOperational.call();
     assert.equal(status, true, "Incorrect initial operating status value");
   });
 
@@ -74,14 +74,17 @@ contract('Flight Surety Tests', async (accounts) => {
       await config.flightSuretyData.setOperatingStatus(false);
 
       let reverted = false;
+      let status = true;
       try
       {
-          await config.flightSurety.setTestingMode(true);
+          status = await config.flightSuretyApp.isOperational.call();
+          await config.flightSuretyApp.registerFlight();
       }
       catch(e) {
           reverted = true;
       }
       assert.equal(reverted, true, "Access not blocked for requireIsOperational");
+      assert.equal(status, false, "Contract is operational");
 
       // Set it back for other tests to work
       await config.flightSuretyData.setOperatingStatus(true);
@@ -131,6 +134,7 @@ contract('Flight Surety Tests', async (accounts) => {
         balance = await config.flightSuretyData.getBalance({from: config.owner});
     }
     catch(e) {
+        console.log(e);
         reverted = true;
     }
 

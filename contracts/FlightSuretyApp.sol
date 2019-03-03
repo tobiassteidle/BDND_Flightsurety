@@ -54,8 +54,7 @@ contract FlightSuretyApp {
     */
     modifier requireIsOperational()
     {
-         // Modify to call data contract's status
-        require(true, "Contract is currently not operational");
+        require(isOperational(), "Contract is currently not operational");
         _;  // All modifiers require an "_" which indicates where the function body will be added
     }
 
@@ -65,6 +64,12 @@ contract FlightSuretyApp {
     modifier requireContractOwner()
     {
         require(msg.sender == contractOwner, "Caller is not contract owner");
+        _;
+    }
+
+    modifier requireIsCallerAirlineFounded()
+    {
+        require(flightSuretyData.isCallerAirlineFounded(msg.sender), "Caller can not participate in contract until it submits funding");
         _;
     }
 
@@ -93,10 +98,10 @@ contract FlightSuretyApp {
 
     function isOperational()
                             public
-                            pure
+                            view
                             returns(bool)
     {
-        return true;  // Modify to call data contract's status
+        return flightSuretyData.isOperational();
     }
 
     /********************************************************************************************/
@@ -112,6 +117,8 @@ contract FlightSuretyApp {
                                 address airline
                             )
                             external
+                            requireIsOperational
+                            requireIsCallerAirlineFounded
     {
         bool success = false;
 
@@ -131,6 +138,7 @@ contract FlightSuretyApp {
                             )
                             external
                             payable
+                            requireIsOperational
     {
         require(msg.value >= AIRLINE_SEED_FUND, "Seed fund required or to low");
 
@@ -148,7 +156,7 @@ contract FlightSuretyApp {
                                 (
                                 )
                                 external
-                                pure
+                                requireIsOperational
     {
 
     }
@@ -165,7 +173,7 @@ contract FlightSuretyApp {
                                     uint8 statusCode
                                 )
                                 internal
-                                pure
+                                requireIsOperational
     {
     }
 
@@ -178,6 +186,7 @@ contract FlightSuretyApp {
                             uint256 timestamp
                         )
                         external
+                        requireIsOperational
     {
         uint8 index = getRandomIndex(msg.sender);
 
@@ -242,6 +251,7 @@ contract FlightSuretyApp {
                             )
                             external
                             payable
+                            requireIsOperational
     {
         // Require registration fee
         require(msg.value >= REGISTRATION_FEE, "Registration fee is required");
@@ -259,6 +269,7 @@ contract FlightSuretyApp {
                             )
                             view
                             external
+                            requireIsOperational
                             returns(uint8[3])
     {
         require(oracles[msg.sender].isRegistered, "Not registered as an oracle");
@@ -282,6 +293,7 @@ contract FlightSuretyApp {
                             uint8 statusCode
                         )
                         external
+                        requireIsOperational
     {
         require((oracles[msg.sender].indexes[0] == index) || (oracles[msg.sender].indexes[1] == index) || (oracles[msg.sender].indexes[2] == index), "Index does not match oracle request");
 
@@ -366,6 +378,9 @@ contract FlightSuretyApp {
 }
 
 contract FlightSuretyData {
+
+    function isOperational() public view returns(bool);
+    function isCallerAirlineFounded(address originSender) public view returns (bool);
 
     function registerAirline(address originSender, address airline) external returns (bool success);
     function fundAirline(address airline) external;

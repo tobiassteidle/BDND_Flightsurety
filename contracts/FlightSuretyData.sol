@@ -75,7 +75,7 @@ contract FlightSuretyData {
 
     modifier requireIsCallerAirlineFounded(address originSender)
     {
-        require(airlines[originSender].isFounded, "Caller can not participate in contract until it submits funding");
+        require(isCallerAirlineFounded(originSender), "Caller can not participate in contract until it submits funding");
         _;
     }
 
@@ -100,6 +100,14 @@ contract FlightSuretyData {
                             returns(bool)
     {
         return authorizedCaller[contractAddress] == 1;
+    }
+
+    function isCallerAirlineFounded(address originSender)
+                            public
+                            view
+                            returns (bool)
+    {
+        return airlines[originSender].isFounded;
     }
 
     /**

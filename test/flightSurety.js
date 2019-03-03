@@ -206,4 +206,58 @@ contract('Flight Surety Tests', async (accounts) => {
     assert.equal(await config.flightSuretyApp.airlinesRegisteredCount.call(), 4, "Threshold ignored");
   });
 
+  it('(airline) fund airline 2-4 (first is funded)', async () => {
+
+    // ARRANGE
+    let fund = await config.flightSuretyApp.AIRLINE_SEED_FUND.call();
+
+    let newAirline = accounts[2];
+    let newAirline2 = accounts[3];
+    let newAirline3 = accounts[4];
+
+    // ACT
+    let rejected = false;
+
+    try {
+        await config.flightSuretyApp.fund({from: newAirline, value: fund.toString(), gasPrice: 0});
+        await config.flightSuretyApp.fund({from: newAirline2, value: fund.toString(), gasPrice: 0});
+        await config.flightSuretyApp.fund({from: newAirline3, value: fund.toString(), gasPrice: 0});
+    }
+    catch(e) {
+        rejected = true;
+    }
+
+    // ASSERT
+    assert.equal(rejected, false, "Airlines not founded");
+  });
+
+  it('(airline) register 5th Airline - requires multiparty consensus', async () => {
+
+    // ARRANGE
+    let fund = await config.flightSuretyApp.AIRLINE_SEED_FUND.call();
+
+    let newAirline = accounts[6];
+
+    let airline2 = accounts[2];
+    let airline3 = accounts[3];
+
+    // Register new Airline - shouldn't change anything
+    await config.flightSuretyApp.registerAirline(newAirline, {from: airline2});
+    assert.equal(await config.flightSuretyApp.airlinesRegisteredCount.call(), 4, "Threshold ignored");
+
+    // Register new Airline - airline 2 vote twice
+    let rejectMultivote = false;
+    try {
+      await config.flightSuretyApp.registerAirline(newAirline, {from: airline2});
+    } catch(e) {
+      rejectMultivote = true;
+    }
+    assert.equal(rejectMultivote, true, "Multivote not rejected");
+    assert.equal(await config.flightSuretyApp.airlinesRegisteredCount.call(), 4, "Multivote possible");
+
+    // Register new Airline - now airline 2 and airline 3 votes for new airline
+    await config.flightSuretyApp.registerAirline(newAirline, {from: airline3});
+    assert.equal(await config.flightSuretyApp.airlinesRegisteredCount.call(), 5, "Consensus not reached");
+  });
+
 });

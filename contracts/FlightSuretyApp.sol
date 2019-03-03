@@ -10,7 +10,7 @@ import "../node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol";
 /* FlightSurety Smart Contract                      */
 /************************************************** */
 contract FlightSuretyApp {
-    using SafeMath for uint256; // Allow SafeMath functions to be called for all uint256 types (similar to "prototype" in Javascript)
+    using SafeMath for uint8; // Allow SafeMath functions to be called for all uint256 types (similar to "prototype" in Javascript)
 
     /********************************************************************************************/
     /*                                       DATA VARIABLES                                     */
@@ -39,6 +39,7 @@ contract FlightSuretyApp {
     mapping(bytes32 => Flight) private flights;
 
     uint8 public airlinesRegisteredCount;
+    mapping(address => address[]) private airlineVotes;
 
     /********************************************************************************************/
     /*                                       FUNCTION MODIFIERS                                 */
@@ -123,13 +124,31 @@ contract FlightSuretyApp {
         bool success = false;
 
         if(airlinesRegisteredCount < MULTIPARTY_CONSENSUS_THRESHOLD) {
-            // Try to register airline
             success = flightSuretyData.registerAirline(msg.sender, airline);
             if(success) {
                 airlinesRegisteredCount++;
             }
         } else {
-            // HIER CONSENSUS
+            bool isDuplicate = false;
+
+            for(uint c = 0; c < airlineVotes[airline].length; c++) {
+                if (airlineVotes[airline][c] == msg.sender) {
+                    isDuplicate = true;
+                    break;
+                }
+            }
+            require(!isDuplicate, "Multivotes not allowed");
+
+            airlineVotes[airline].push(msg.sender);
+            if (airlineVotes[airline].length >= airlinesRegisteredCount.div(2)) {
+
+                success = flightSuretyData.registerAirline(msg.sender, airline);
+                if(success) {
+                    airlinesRegisteredCount++;
+                }
+
+                airlineVotes[airline] = new address[](0);
+            }
         }
     }
 
@@ -146,7 +165,6 @@ contract FlightSuretyApp {
         address(flightSuretyData).transfer(msg.value);
         flightSuretyData.fundAirline(msg.sender);
     }
-
 
    /**
     * @dev Register a future flight for insuring.

@@ -73,6 +73,12 @@ contract FlightSuretyData {
         _;
     }
 
+    modifier requireIsCallerAirlineRegistered(address originSender)
+    {
+        require(isCallerAirlineRegistered(originSender), "Caller not registered");
+        _;
+    }
+
     modifier requireIsCallerAirlineFounded(address originSender)
     {
         require(isCallerAirlineFounded(originSender), "Caller can not participate in contract until it submits funding");
@@ -100,6 +106,14 @@ contract FlightSuretyData {
                             returns(bool)
     {
         return authorizedCaller[contractAddress] == 1;
+    }
+
+    function isCallerAirlineRegistered(address originSender)
+                            public
+                            view
+                            returns (bool)
+    {
+        return airlines[originSender].isRegistered;
     }
 
     function isCallerAirlineFounded(address originSender)
@@ -181,6 +195,7 @@ contract FlightSuretyData {
                             external
                             requireIsOperational
                             requireIsCallerAuthorized
+                            requireIsCallerAirlineRegistered(originSender)
                             requireIsCallerAirlineFounded(originSender)
                             returns(bool success)
     {

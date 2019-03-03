@@ -68,6 +68,12 @@ contract FlightSuretyApp {
         _;
     }
 
+    modifier requireIsCallerAirlineRegistered()
+    {
+        require(flightSuretyData.isCallerAirlineRegistered(msg.sender), "Caller not registered");
+        _;
+    }
+
     modifier requireIsCallerAirlineFounded()
     {
         require(flightSuretyData.isCallerAirlineFounded(msg.sender), "Caller can not participate in contract until it submits funding");
@@ -119,6 +125,7 @@ contract FlightSuretyApp {
                             )
                             external
                             requireIsOperational
+                            requireIsCallerAirlineRegistered
                             requireIsCallerAirlineFounded
     {
         bool success = false;
@@ -398,6 +405,7 @@ contract FlightSuretyApp {
 contract FlightSuretyData {
 
     function isOperational() public view returns(bool);
+    function isCallerAirlineRegistered(address originSender) public view returns (bool);
     function isCallerAirlineFounded(address originSender) public view returns (bool);
 
     function registerAirline(address originSender, address airline) external returns (bool success);

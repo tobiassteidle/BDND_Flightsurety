@@ -22,7 +22,6 @@ contract FlightSuretyData {
     struct FlightInsurance {
         bool isInsured;
         bool isCredited;
-        bool isPayed;
         uint256 amount;
     }
 
@@ -245,10 +244,28 @@ contract FlightSuretyData {
                             (
                             )
                             external
+                            requireIsOperational
+                            requireIsCallerAuthorized
                             view
                             returns (address[])
     {
         return insurees;
+    }
+
+    function fetchInsureeAmount
+                            (
+                                address originSender,
+                                address airline,
+                                string flightNumber,
+                                uint256 timestamp
+                            )
+                            external
+                            requireIsOperational
+                            requireIsCallerAuthorized
+                            view
+                            returns (uint256)
+    {
+        return flightInsurances[getInsuranceKey(originSender, airline, flightNumber, timestamp)].amount;
     }
 
     function insureeBalance
@@ -256,6 +273,8 @@ contract FlightSuretyData {
                                 address originSender
                             )
                             external
+                            requireIsOperational
+                            requireIsCallerAuthorized
                             view
                             returns (uint256)
     {
@@ -314,12 +333,11 @@ contract FlightSuretyData {
         FlightInsurance storage insurance = flightInsurances[getInsuranceKey(originSender, airline, flightNumber, timestamp)];
 
         // if instead of require so that a single mistake does not endanger the payouts of other policyholders
-        if(insurance.isInsured && !insurance.isCredited && !insurance.isPayed) {
+        if(insurance.isInsured && !insurance.isCredited) {
             insurance.isCredited = true;
             insureeBalances[originSender] = newAmount;
         }
     }
-
 
     /**
      *  @dev Transfers eligible payout funds to insuree

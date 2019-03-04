@@ -10,7 +10,8 @@ import "../node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol";
 /* FlightSurety Smart Contract                      */
 /************************************************** */
 contract FlightSuretyApp {
-    using SafeMath for uint8; // Allow SafeMath functions to be called for all uint256 types (similar to "prototype" in Javascript)
+    using SafeMath for uint8;
+    using SafeMath for uint256;
 
     /********************************************************************************************/
     /*                                       DATA VARIABLES                                     */
@@ -228,12 +229,12 @@ contract FlightSuretyApp {
                                 internal
                                 requireIsOperational
     {
-        address [] memory insurees = flightSuretyData.fetchInsurees();
-        for(uint i = 0; i < insurees.length; i++) {
-
-            // HIER MUSS DIE BRECHNUNG REIN
-
-            flightSuretyData.creditInsurees(insurees[i], airline, flightNumber, timestamp, 1 ether * 1.5);
+        if(statusCode == STATUS_CODE_LATE_AIRLINE) {
+            address [] memory insurees = flightSuretyData.fetchInsurees();
+            for(uint i = 0; i < insurees.length; i++) {
+                uint256 amount = flightSuretyData.fetchInsureeAmount(insurees[i], airline, flightNumber, timestamp);
+                flightSuretyData.creditInsurees(insurees[i], airline, flightNumber, timestamp, amount.mul(15).div(10));
+            }
         }
     }
 
@@ -448,6 +449,8 @@ contract FlightSuretyData {
     function fundAirline(address airline) external;
 
     function fetchInsurees() external view returns (address[]);
+    function fetchInsureeAmount(address originSender,address airline,string flightNumber,uint256 timestamp) external view returns (uint256);
+
     function insureeBalance(address originSender) external view returns (uint256);
     function buy(address originSender, address airline, string flightNumber, uint256 timestamp, uint256 amount) external;
     function creditInsurees(address originSender, address airline, string flightNumber, uint256 timestamp, uint256 newAmount) external;

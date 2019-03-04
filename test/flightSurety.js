@@ -8,6 +8,7 @@ var BigNumber = require('bignumber.js');
 contract('Flight Surety Tests', async (accounts) => {
 
   const ORACLES_COUNT = 10;
+  const STATUS_CODE_LATE_AIRLINE = 20;
 
   var config;
   before('setup contract', async () => {
@@ -356,7 +357,7 @@ contract('Flight Surety Tests', async (accounts) => {
 
       for (let idx = 0; idx < 9; idx++) {
         try {
-          await config.flightSuretyApp.submitOracleResponse(idx, airline, flight, 0, 10, {from: accounts[a]});
+          await config.flightSuretyApp.submitOracleResponse(idx, airline, flight, 0, STATUS_CODE_LATE_AIRLINE, {from: accounts[a]});
           console.log("Bruteforce successful");
         } catch (e) {
         }

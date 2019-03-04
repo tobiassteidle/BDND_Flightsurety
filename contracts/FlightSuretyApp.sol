@@ -17,6 +17,7 @@ contract FlightSuretyApp {
     /********************************************************************************************/
 
     uint256 public constant AIRLINE_SEED_FUND = 10 ether;
+    uint256 private constant INSURANCE_MAX_PAYMENT = 1 ether;
     uint256 private constant MULTIPARTY_CONSENSUS_THRESHOLD = 4;
 
     // Flight status codees
@@ -29,14 +30,6 @@ contract FlightSuretyApp {
 
     address private contractOwner;          // Account used to deploy contract
     FlightSuretyData flightSuretyData;
-
-    struct Flight {
-        bool isRegistered;
-        uint8 statusCode;
-        uint256 updatedTimestamp;
-        address airline;
-    }
-    mapping(bytes32 => Flight) private flights;
 
     uint8 public airlinesRegisteredCount;
     mapping(address => address[]) private airlineVotes;
@@ -77,6 +70,12 @@ contract FlightSuretyApp {
     modifier requireIsCallerAirlineFounded()
     {
         require(flightSuretyData.isCallerAirlineFounded(msg.sender), "Caller can not participate in contract until it submits funding");
+        _;
+    }
+
+    modifier requireFlightNotInsured(address airline, string flightNumber, uint256 timestamp)
+    {
+        require(!flightSuretyData.isFlightInsured(msg.sender, airline, flightNumber, timestamp), "Flight already insured");
         _;
     }
 
@@ -173,17 +172,37 @@ contract FlightSuretyApp {
         flightSuretyData.fundAirline(msg.sender);
     }
 
+    function insureeBalance
+                            (
+                            )
+                            external
+                            view
+                            requireIsOperational
+                            returns (uint256)
+    {
+        return flightSuretyData.insureeBalance(msg.sender);
+    }
+
    /**
     * @dev Register a future flight for insuring.
     *
     */
     function registerFlight
                                 (
+                                    address airline,
+                                    string flightNumber,
+                                    uint256 timestamp
                                 )
                                 external
+                                payable
                                 requireIsOperational
+                                requireFlightNotInsured(airline, flightNumber, timestamp)
     {
+        require(msg.value <= INSURANCE_MAX_PAYMENT, "Maximum sum insured exceeded");
 
+        // Transfer Payment to Data Contract
+        address(flightSuretyData).transfer(msg.value);
+        flightSuretyData.buy(msg.sender, airline, flightNumber, timestamp, msg.value);
     }
 
    /**
@@ -193,13 +212,17 @@ contract FlightSuretyApp {
     function processFlightStatus
                                 (
                                     address airline,
-                                    string memory flight,
+                                    string memory flightNumber,
                                     uint256 timestamp,
                                     uint8 statusCode
                                 )
                                 internal
                                 requireIsOperational
     {
+
+
+
+        flightSuretyData.creditInsurees(msg.sender, airline, flightNumber, timestamp, 100);
     }
 
 
@@ -301,9 +324,6 @@ contract FlightSuretyApp {
 
         return oracles[msg.sender].indexes;
     }
-
-
-
 
     // Called by oracle when a response is available to an outstanding request
     // For the response to be accepted, there must be a pending request that is open
@@ -410,7 +430,12 @@ contract FlightSuretyData {
     function isOperational() public view returns(bool);
     function isCallerAirlineRegistered(address originSender) public view returns (bool);
     function isCallerAirlineFounded(address originSender) public view returns (bool);
+    function isFlightInsured(address originSender, address airline, string flightNumber, uint256 timestamp) public view returns (bool);
 
     function registerAirline(address originSender, address airline) external returns (bool success);
     function fundAirline(address airline) external;
+
+    function insureeBalance(address originSender) external view returns (uint256);
+    function buy(address originSender, address airline, string flightNumber, uint256 timestamp, uint256 amount) external;
+    function creditInsurees(address originSender, address airline, string flightNumber, uint256 timestamp, uint256 newAmount) external;
 }

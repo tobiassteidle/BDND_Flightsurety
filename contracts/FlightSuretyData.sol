@@ -19,6 +19,17 @@ contract FlightSuretyData {
     }
     mapping(address => Airline) private airlines;
 
+    struct FlightInsurance {
+        bool isInsured;
+        bool isCredited;
+        bool isPayed;
+        uint256 amount;
+    }
+
+    address [] private insurees;
+    mapping(address => uint256) private insureeBalances;
+    mapping(bytes32 => FlightInsurance) private flightInsurances;
+
     /********************************************************************************************/
     /*                                       EVENT DEFINITIONS                                  */
     /********************************************************************************************/
@@ -85,6 +96,12 @@ contract FlightSuretyData {
         _;
     }
 
+    modifier requireFlightNotInsured(address originSender, address airline, string flightNumber, uint256 timestamp)
+    {
+        require(!isFlightInsured(originSender, airline, flightNumber, timestamp), "Flight already insured");
+        _;
+    }
+
     /********************************************************************************************/
     /*                                       UTILITY FUNCTIONS                                  */
     /********************************************************************************************/
@@ -122,6 +139,15 @@ contract FlightSuretyData {
                             returns (bool)
     {
         return airlines[originSender].isFounded;
+    }
+
+    function isFlightInsured(address originSender, address airline, string flightNumber, uint256 timestamp)
+                            public
+                            view
+                            returns (bool)
+    {
+        FlightInsurance storage insurance = flightInsurances[getInsuranceKey(originSender, airline, flightNumber, timestamp)];
+        return insurance.isInsured;
     }
 
     /**
@@ -215,19 +241,37 @@ contract FlightSuretyData {
         airlines[airline].isFounded = true;
     }
 
+    function insureeBalance
+                            (
+                                address originSender
+                            )
+                            external
+                            view
+                            returns (uint256)
+    {
+        return insureeBalances[originSender];
+    }
+
    /**
     * @dev Buy insurance for a flight
     *
     */
     function buy
                             (
+                                address originSender,
+                                address airline,
+                                string flightNumber,
+                                uint256 timestamp,
+                                uint256 amount
                             )
                             external
-                            payable
                             requireIsOperational
                             requireIsCallerAuthorized
+                            requireFlightNotInsured(originSender, airline, flightNumber, timestamp)
     {
-
+        FlightInsurance storage insurance = flightInsurances[getInsuranceKey(originSender, airline, flightNumber, timestamp)];
+        insurance.isInsured = true;
+        insurance.amount = amount;
     }
 
     /**
@@ -235,11 +279,26 @@ contract FlightSuretyData {
     */
     function creditInsurees
                                 (
+                                    address originSender,
+                                    address airline,
+                                    string flightNumber,
+                                    uint256 timestamp,
+                                    uint256 newAmount
                                 )
                                 external
                                 requireIsOperational
                                 requireIsCallerAuthorized
     {
+        /*
+        FlightInsurance storage flightFlightinsurance = FlightInsurance[getFlightKey(airline, flightNumber, timestamp)];
+        Insurance storage insurance = flightFlightinsurance.insurances[originSender];
+
+        require(insurance.isInsured, "Flight not insured");
+        require(!insurance.isCredited, "Insurance already credited");
+
+        insurance.isCredited = true;
+        insureeBalances[originSender].add(newAmount);
+        */
     }
 
 
@@ -270,8 +329,9 @@ contract FlightSuretyData {
     {
     }
 
-    function getFlightKey
+    function getInsuranceKey
                         (
+                            address insuree,
                             address airline,
                             string memory flight,
                             uint256 timestamp
@@ -280,7 +340,7 @@ contract FlightSuretyData {
                         internal
                         returns(bytes32)
     {
-        return keccak256(abi.encodePacked(airline, flight, timestamp));
+        return keccak256(abi.encodePacked(insuree, airline, flight, timestamp));
     }
 
     /**

@@ -7,6 +7,8 @@ var BigNumber = require('bignumber.js');
 
 contract('Flight Surety Tests', async (accounts) => {
 
+  const ORACLES_COUNT = 10;
+
   var config;
   before('setup contract', async () => {
     config = await Test.Config(accounts);
@@ -259,5 +261,126 @@ contract('Flight Surety Tests', async (accounts) => {
     await config.flightSuretyApp.registerAirline(newAirline, {from: airline3});
     assert.equal(await config.flightSuretyApp.airlinesRegisteredCount.call(), 5, "Consensus not reached");
   });
+
+  it('(insurance) Buy insurance for flight (exeeded max payment)', async () => {
+
+    let insuree = accounts[7];
+    let airline = accounts[2];
+    let flight = 'ND1309';
+    let value = Web3Utils.toWei("1.1", "ether");
+
+    let rejected = false;
+
+    try {
+      await config.flightSuretyApp.registerFlight(airline, flight, 0, {from: insuree, value: value, gasPrice: 0});
+    }
+    catch(e) {
+      rejected = true;
+    }
+
+    // ASSERT
+    assert.equal(rejected, true, "Max payment should not exeeded.");
+  });
+
+  it('(insurance) Buy insurance for flight', async () => {
+
+    let insuree = accounts[7];
+    let airline = accounts[2];
+    let flight = 'ND1309';
+    let value = Web3Utils.toWei("1", "ether");
+
+    let rejected = false;
+
+    try {
+      await config.flightSuretyApp.registerFlight(airline, flight, 0, {from: insuree, value: value, gasPrice: 0});
+    }
+    catch(e) {
+      rejected = true;
+      console.log(e);
+    }
+
+    // ASSERT
+    assert.equal(rejected, false, "Can´t by insurance.");
+  });
+
+  it('(insurance) prevent buying more then one insurance for flight', async () => {
+
+    let insuree = accounts[7];
+    let airline = accounts[2];
+    let flight = 'ND1309';
+    let value = Web3Utils.toWei("0.7", "ether");
+
+    let rejected = false;
+
+    try {
+      await config.flightSuretyApp.registerFlight(airline, flight, 0, {from: insuree, value: value, gasPrice: 0});
+    }
+    catch(e) {
+      rejected = true;
+    }
+
+    // ASSERT
+    assert.equal(rejected, true, "Can insure flight more then one time.");
+  });
+
+
+  it('(passenger) check balance should be 0', async () => {
+    let insuree = accounts[7];
+    let rejected = false;
+    let balance = 100;
+
+    try {
+      balance = await config.flightSuretyApp.insureeBalance({from: insuree});
+
+    }
+    catch(e) {
+      rejected = true;
+    }
+
+    // ASSERT
+    assert.equal(rejected, false, "Failure on check balance.");
+    assert.equal(balance.toNumber(), 0, "Invalid balance.");
+  });
+/*
+  it('(oracles) bruteforce submitOracleResponse() to emit processFlightStatus()', async () => {
+
+    // ARRANGE
+    let fee = await config.flightSuretyApp.REGISTRATION_FEE.call();
+    let airline = accounts[2];
+    let flight = 'ND1309';
+
+    // ACT
+    for(let a = 1; a < ORACLES_COUNT; a++) {
+      await config.flightSuretyApp.registerOracle({from: accounts[a], value: fee});
+      await config.flightSuretyApp.fetchFlightStatus(airline, flight, 0, {from: accounts[a]});
+
+      for (let idx = 0; idx < 9; idx++) {
+        try {
+          await config.flightSuretyApp.submitOracleResponse(idx, airline, flight, 0, 10, {from: accounts[a]});
+          console.log("FUNTIONIERT 1");
+        } catch (e) {
+          console.log(e.message);
+        }
+      }
+    }
+  });
+
+  it('(passenger) check balance should be asdfasdf0', async () => {
+    let insuree = accounts[7];
+    let rejected = false;
+    let balance = 100;
+
+    try {
+      balance = await config.flightSuretyApp.insureeBalance({from: insuree});
+      console.log(balance);
+    }
+    catch(e) {
+      rejected = true;
+    }
+
+    // ASSERT
+    assert.equal(rejected, false, "Failure on check balance.");
+    assert.equal(balance.toNumber(), 0, "Invalid balance.");
+  });*/
 
 });

@@ -9,7 +9,7 @@ web3.eth.defaultAccount = web3.eth.accounts[0];
 let flightSuretyApp = new web3.eth.Contract(FlightSuretyApp.abi, config.appAddress);
 
 const ACCOUNT_OFFSET = 10;  // Start with an offset (keep first accounts airline only)
-const ORACLES_COUNT = 30;
+const ORACLES_COUNT = 30;   // Register amount of Oracles
 
 let oracle_accounts = [];
 
@@ -98,6 +98,7 @@ flightSuretyApp.events.OracleRequest({
         if(oracle_accounts[idx].indexes.includes(index)) {
           console.log("Oracle matches an react to request: " + JSON.stringify(oracle_accounts[idx]));
 
+          // Submit Oracle Response
           flightSuretyApp.methods
             .submitOracleResponse(index, airline, flight, timestamp, statusCode)
             .send({ from: oracle_accounts[idx].address }, (error, result) => {

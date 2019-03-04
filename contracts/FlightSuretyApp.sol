@@ -205,6 +205,15 @@ contract FlightSuretyApp {
         flightSuretyData.buy(msg.sender, airline, flightNumber, timestamp, msg.value);
     }
 
+    function withdraw
+                            (
+                            )
+                            external
+                            requireIsOperational
+    {
+        flightSuretyData.pay(msg.sender);
+    }
+
    /**
     * @dev Called after oracle has updated flight status
     *
@@ -219,12 +228,14 @@ contract FlightSuretyApp {
                                 internal
                                 requireIsOperational
     {
+        address [] memory insurees = flightSuretyData.fetchInsurees();
+        for(uint i = 0; i < insurees.length; i++) {
 
+            // HIER MUSS DIE BRECHNUNG REIN
 
-
-        flightSuretyData.creditInsurees(msg.sender, airline, flightNumber, timestamp, 100);
+            flightSuretyData.creditInsurees(insurees[i], airline, flightNumber, timestamp, 1 ether * 1.5);
+        }
     }
-
 
     // Generate a request for oracles to fetch flight information
     function fetchFlightStatus
@@ -426,6 +437,7 @@ contract FlightSuretyApp {
 }
 
 contract FlightSuretyData {
+    address [] public insurees;
 
     function isOperational() public view returns(bool);
     function isCallerAirlineRegistered(address originSender) public view returns (bool);
@@ -435,7 +447,10 @@ contract FlightSuretyData {
     function registerAirline(address originSender, address airline) external returns (bool success);
     function fundAirline(address airline) external;
 
+    function fetchInsurees() external view returns (address[]);
     function insureeBalance(address originSender) external view returns (uint256);
     function buy(address originSender, address airline, string flightNumber, uint256 timestamp, uint256 amount) external;
     function creditInsurees(address originSender, address airline, string flightNumber, uint256 timestamp, uint256 newAmount) external;
+
+    function pay(address originSender) external;
 }

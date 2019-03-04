@@ -241,6 +241,16 @@ contract FlightSuretyData {
         airlines[airline].isFounded = true;
     }
 
+    function fetchInsurees
+                            (
+                            )
+                            external
+                            view
+                            returns (address[])
+    {
+        return insurees;
+    }
+
     function insureeBalance
                             (
                                 address originSender
@@ -272,6 +282,18 @@ contract FlightSuretyData {
         FlightInsurance storage insurance = flightInsurances[getInsuranceKey(originSender, airline, flightNumber, timestamp)];
         insurance.isInsured = true;
         insurance.amount = amount;
+
+        // Add insuree to list of all insurees (if not exists)
+        bool duplicate = false;
+        for(uint256 i = 0; i < insurees.length; i++) {
+            if(insurees[i] == originSender) {
+                duplicate = true;
+                break;
+            }
+        }
+        if(!duplicate) {
+            insurees.push(originSender);
+        }
     }
 
     /**
@@ -289,16 +311,13 @@ contract FlightSuretyData {
                                 requireIsOperational
                                 requireIsCallerAuthorized
     {
-        /*
-        FlightInsurance storage flightFlightinsurance = FlightInsurance[getFlightKey(airline, flightNumber, timestamp)];
-        Insurance storage insurance = flightFlightinsurance.insurances[originSender];
+        FlightInsurance storage insurance = flightInsurances[getInsuranceKey(originSender, airline, flightNumber, timestamp)];
 
-        require(insurance.isInsured, "Flight not insured");
-        require(!insurance.isCredited, "Insurance already credited");
-
-        insurance.isCredited = true;
-        insureeBalances[originSender].add(newAmount);
-        */
+        // if instead of require so that a single mistake does not endanger the payouts of other policyholders
+        if(insurance.isInsured && !insurance.isCredited && !insurance.isPayed) {
+            insurance.isCredited = true;
+            insureeBalances[originSender] = newAmount;
+        }
     }
 
 
@@ -308,11 +327,17 @@ contract FlightSuretyData {
     */
     function pay
                             (
+                                address originSender
                             )
                             external
                             requireIsOperational
                             requireIsCallerAuthorized
     {
+        require(address(this).balance > insureeBalances[originSender], "Contract out of funds");
+
+        uint256 prev = insureeBalances[originSender];
+        insureeBalances[originSender] = 0;
+        originSender.transfer(prev);
     }
 
    /**

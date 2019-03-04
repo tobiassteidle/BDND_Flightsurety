@@ -341,9 +341,9 @@ contract('Flight Surety Tests', async (accounts) => {
     assert.equal(rejected, false, "Failure on check balance.");
     assert.equal(balance.toNumber(), 0, "Invalid balance.");
   });
-/*
-  it('(oracles) bruteforce submitOracleResponse() to emit processFlightStatus()', async () => {
 
+  it('(oracles) bruteforce submitOracleResponse() to emit processFlightStatus()', async () => {
+    console.log("Bruteforce submitOracleResponse() - may take a moment... (sure there is a better way)")
     // ARRANGE
     let fee = await config.flightSuretyApp.REGISTRATION_FEE.call();
     let airline = accounts[2];
@@ -357,22 +357,20 @@ contract('Flight Surety Tests', async (accounts) => {
       for (let idx = 0; idx < 9; idx++) {
         try {
           await config.flightSuretyApp.submitOracleResponse(idx, airline, flight, 0, 10, {from: accounts[a]});
-          console.log("FUNTIONIERT 1");
+          console.log("Bruteforce successful");
         } catch (e) {
-          console.log(e.message);
         }
       }
     }
   });
 
-  it('(passenger) check balance should be asdfasdf0', async () => {
+  it('(passenger) check balance after credited (no withdraw)', async () => {
     let insuree = accounts[7];
     let rejected = false;
-    let balance = 100;
+    let balance = 0;
 
     try {
       balance = await config.flightSuretyApp.insureeBalance({from: insuree});
-      console.log(balance);
     }
     catch(e) {
       rejected = true;
@@ -380,7 +378,48 @@ contract('Flight Surety Tests', async (accounts) => {
 
     // ASSERT
     assert.equal(rejected, false, "Failure on check balance.");
-    assert.equal(balance.toNumber(), 0, "Invalid balance.");
-  });*/
+    assert.equal(balance.toString(), new BigNumber("1500000000000000000").toString(), "Invalid balance.");
+  });
+
+  it('(passenger) withdraw to account', async () => {
+    let insuree = accounts[7];
+    let initialBalance = await web3.eth.getBalance(insuree);
+    let balance = 1000;
+
+    let rejected = false;
+    try {
+      await config.flightSuretyApp.withdraw({from: insuree});
+      balance = await config.flightSuretyApp.insureeBalance({from: insuree});
+    }
+    catch(e) {
+      rejected = true;
+      console.log(e);
+    }
+
+    let currentBalance = await web3.eth.getBalance(insuree);
+
+    assert.equal(rejected, false, "Failure on withdraw to passanger account.");
+    assert.equal(balance.toString(), "0", "Balance should be 0");
+    assert.equal(new BigNumber(currentBalance.toString()).isGreaterThan(new BigNumber(initialBalance.toString())), true, "Invalid balance on account");
+  });
+
+  it('(passenger) prevent withdraw to account (twice)', async () => {
+    let insuree = accounts[7];
+    let initialBalance = await web3.eth.getBalance(insuree);
+
+    let rejected = false;
+    try {
+      await config.flightSuretyApp.withdraw({from: insuree});
+    }
+    catch(e) {
+      rejected = true;
+      console.log(e);
+    }
+
+    let currentBalance = await web3.eth.getBalance(insuree);
+
+    assert.equal(rejected, false, "Failure on withdraw to passanger account.");
+    assert.equal(new BigNumber(currentBalance.toString()).isEqualTo(new BigNumber(initialBalance.toString())), false, "Invalid balance on account");
+  });
 
 });

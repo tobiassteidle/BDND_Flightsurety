@@ -231,11 +231,7 @@ contract FlightSuretyApp {
                                 requireIsOperational
     {
         if(statusCode == STATUS_CODE_LATE_AIRLINE) {
-            address [] memory insurees = flightSuretyData.fetchInsurees(airline, flightNumber, timestamp);
-            for(uint i = 0; i < insurees.length; i++) {
-                uint256 amount = flightSuretyData.fetchInsureeAmount(insurees[i], airline, flightNumber, timestamp);
-                flightSuretyData.creditInsurees(insurees[i], airline, flightNumber, timestamp, amount.mul(15).div(10));
-            }
+            flightSuretyData.creditInsurees(airline, flightNumber, timestamp);
         }
     }
 
@@ -255,6 +251,7 @@ contract FlightSuretyApp {
         bytes32 key = keccak256(abi.encodePacked(index, airline, flight, timestamp));
         oracleResponses[key] = ResponseInfo({
                                                 requester: msg.sender,
+                                                isValid: true,
                                                 isOpen: true
                                             });
 
@@ -285,7 +282,8 @@ contract FlightSuretyApp {
     // Model for responses from oracles
     struct ResponseInfo {
         address requester;                              // Account that requested status
-        bool isOpen;                                    // If open, oracle responses are accepted
+        bool isValid;                                   // If valid, oracle responses are accepted
+        bool isOpen;                                    // If open, oracle responses are not finished
         mapping(uint8 => address[]) responses;          // Mapping key is the status code reported
                                                         // This lets us group responses and identify
                                                         // the response that majority of the oracles
@@ -357,22 +355,24 @@ contract FlightSuretyApp {
 
 
         bytes32 key = keccak256(abi.encodePacked(index, airline, flight, timestamp));
-        require(oracleResponses[key].isOpen, "Flight or timestamp do not match oracle request");
+        require(oracleResponses[key].isValid, "Flight or timestamp do not match oracle request");
 
-        oracleResponses[key].responses[statusCode].push(msg.sender);
+        if(oracleResponses[key].isOpen) {
+            oracleResponses[key].responses[statusCode].push(msg.sender);
 
-        // Information isn't considered verified until at least MIN_RESPONSES
-        // oracles respond with the *** same *** information
-        emit OracleReport(airline, flight, timestamp, statusCode);
-        if (oracleResponses[key].responses[statusCode].length >= MIN_RESPONSES) {
+            // Information isn't considered verified until at least MIN_RESPONSES
+            // oracles respond with the *** same *** information
+            emit OracleReport(airline, flight, timestamp, statusCode);
+            if (oracleResponses[key].responses[statusCode].length >= MIN_RESPONSES) {
 
-            // if Response is verified close request
-            oracleResponses[key].isOpen = false;
+                // if Response is verified close request
+                oracleResponses[key].isOpen = false;
 
-            emit FlightStatusInfo(airline, flight, timestamp, statusCode);
+                emit FlightStatusInfo(airline, flight, timestamp, statusCode);
 
-            // Handle flight status as appropriate
-            processFlightStatus(airline, flight, timestamp, statusCode);
+                // Handle flight status as appropriate
+                processFlightStatus(airline, flight, timestamp, statusCode);
+            }
         }
     }
 
@@ -449,12 +449,11 @@ contract FlightSuretyData {
     function registerAirline(address originSender, address airline) external returns (bool success);
     function fundAirline(address airline) external;
 
-    function fetchInsurees(address airline, string flightNumber, uint256 timestamp) external view returns (address[]);
     function fetchInsureeAmount(address originSender,address airline,string flightNumber,uint256 timestamp) external view returns (uint256);
 
     function insureeBalance(address originSender) external view returns (uint256);
     function buy(address originSender, address airline, string flightNumber, uint256 timestamp, uint256 amount) external;
-    function creditInsurees(address originSender, address airline, string flightNumber, uint256 timestamp, uint256 newAmount) external;
+    function creditInsurees(address airline, string flightNumber, uint256 timestamp) external;
 
     function pay(address originSender) external;
 }

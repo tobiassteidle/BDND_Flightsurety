@@ -1,20 +1,51 @@
 import FlightSuretyApp from '../../build/contracts/FlightSuretyApp.json';
+import FlightSuretyData from '../../build/contracts/FlightSuretyData.json';
 import Config from './config.json';
 import Web3 from 'web3';
 
 export default class Contract {
     constructor(network, callback) {
 
-        let config = Config[network];
-        this.web3 = new Web3(new Web3.providers.WebsocketProvider(config.url.replace('http', 'ws')));
-        this.flightSuretyApp = new this.web3.eth.Contract(FlightSuretyApp.abi, config.appAddress);
-        this.initialize(callback);
-        this.owner = null;
-        this.airlines = [];
-        this.passengers = [];
+        async function initilizeProvider() {
+
+          if (window.ethereum) {
+            try {
+              // Request account access
+              await window.ethereum.enable();
+
+              return window.ethereum;;
+            } catch (error) {
+              // User denied account access...
+              console.error("User denied account access")
+            }
+          }
+          // Legacy dapp browsers...
+          else if (window.web3) {
+            return window.web3.currentProvider;
+          }
+          // If no injected web3 instance is detected, fall back to Ganache
+          else {
+            return new Web3.providers.WebsocketProvider(config.url.replace('http', 'ws'));
+          }
+
+        }
+
+        let self = this;
+        initilizeProvider().then(function (provider) {
+          let config = Config[network];
+          self.web3 = new Web3(new Web3.providers.WebsocketProvider(config.url.replace('http', 'ws')));
+          self.web3Metamask = new Web3(provider);
+          self.flightSuretyApp = new self.web3.eth.Contract(FlightSuretyApp.abi, config.appAddress);
+          self.flightSuretyData = new self.web3.eth.Contract(FlightSuretyData.abi, config.dataAddress);
+          self.flightSuretyAppMetamask = new self.web3Metamask.eth.Contract(FlightSuretyApp.abi, config.appAddress);
+          self.initialize(callback, config);
+          self.owner = null;
+          self.airlines = [];
+          self.passengers = [];
+        });
     }
 
-    initialize(callback) {
+    initialize(callback, config) {
         this.web3.eth.getAccounts((error, accts) => {
 
             this.owner = accts[0];
@@ -29,8 +60,19 @@ export default class Contract {
                 this.passengers.push(accts[counter++]);
             }
 
+          this.flightSuretyData.methods
+            .authorizeCaller(config.appAddress)
+            .call({ from: self.owner}, callback);
+
             callback();
         });
+
+      this.web3Metamask.eth.getAccounts((error, accts) => {
+
+        this.ownerMetamask = accts[0];
+
+        callback();
+      });
     }
 
     isOperational(callback) {
@@ -43,7 +85,7 @@ export default class Contract {
     fetchFlightStatus(flight, callback) {
         let self = this;
         let payload = {
-            airline: self.airlines[0],
+            airline: self.owner,
             flight: flight,
             timestamp: Math.floor(Date.now() / 1000)
         }
@@ -76,18 +118,28 @@ export default class Contract {
         })
     }
 
-    registerFlight(flight, callback) {
+    registerFlight(flight, value, callback) {
       let self = this;
-      self.flightSuretyApp.methods
+      self.flightSuretyAppMetamask.methods
             .registerFlight(flight.airline, flight.fn, flight.timestamp)
-            .send({ from: self.passengers[0], value: "1000000000000000000"}, (error, result) => {
+            .send({ from: self.ownerMetamask, value: self.web3.utils.toWei(value, "ether")}, (error, result) => {
               console.log(error);
                 callback(error, result);
               });
 
-      //await config.flightSuretyApp.registerFlight(airline, flight, 0, {from: insuree, value: value, gasPrice: 0});*/
-
       console.log("REGISTER FLIGHT: " + flight);
+      callback();
+    }
+
+    insuranceBalance(callback) {
+      let self = this;
+      self.flightSuretyApp.methods
+        .insureeBalance()
+        .call({ from: self.ownerMetamask}, callback);
+    }
+
+    passengerWithdraw(callback) {
+      console.log("PAYOUT");
       callback();
     }
 }

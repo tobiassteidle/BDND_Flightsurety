@@ -360,6 +360,7 @@ contract('Flight Surety Tests', async (accounts) => {
           await config.flightSuretyApp.submitOracleResponse(idx, airline, flight, 0, STATUS_CODE_LATE_AIRLINE, {from: accounts[a]});
           console.log("Bruteforce successful");
         } catch (e) {
+          console.log(e.message); // for Debugging
         }
       }
     }

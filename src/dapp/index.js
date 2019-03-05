@@ -29,7 +29,7 @@ import './flightsurety.css';
                 timestamp: Math.floor(Date.now() / 1000),
                 target: "Aberdeen",
                 fn: "BD674",
-                airline: contract.airlines[0],
+                airline: contract.owner,
                 status: "0"
             },
             {
@@ -37,7 +37,7 @@ import './flightsurety.css';
                 timestamp: Math.floor(Date.now() / 1000),
                 target: "Newcastle",
                 fn: "BA1326",
-                airline: contract.airlines[1],
+                airline: contract.owner,
                 status: "0"
             },
             {
@@ -45,7 +45,7 @@ import './flightsurety.css';
                 timestamp: Math.floor(Date.now() / 1000),
                 target: "Durham Tees",
                 fn: "GF5232",
-                airline: contract.airlines[2],
+                airline: contract.owner,
                 status: "0"
             },
             {
@@ -53,7 +53,7 @@ import './flightsurety.css';
                 timestamp: Math.floor(Date.now() / 1000),
                 target: "Dublin",
                 fn: "AA7991",
-                airline: contract.airlines[2],
+                airline: contract.owner,
                 status: "0"
             },
             {
@@ -61,7 +61,7 @@ import './flightsurety.css';
                 timestamp: Math.floor(Date.now() / 1000),
                 target: "Shannon",
                 fn: "AA8017",
-                airline: contract.airlines[2],
+                airline: contract.owner,
                 status: "0"
             }
         ];
@@ -75,17 +75,18 @@ import './flightsurety.css';
             displayFlightplan( available_flights, fetchFlightStatusCallback, registerFlightCallback);
         });
 
-
-/*
         // User-submitted transaction
-        DOM.elid('submit-oracle').addEventListener('click', () => {
-            let flight = DOM.elid('flight-number').value;
-            // Write transaction
-            contract.fetchFlightStatus(flight, (error, result) => {
-                display('Oracles', 'Trigger oracles', [ { label: 'Fetch Flight Status', error: error, value: result.flight + ' ' + result.timestamp} ]);
+        DOM.elid('passengerWithdraw').addEventListener('click', () => {
+
+            contract.insuranceBalance(insuranceBalanceCallback);
+
+            /*
+            contract.passengerWithdraw(function() {
+                contract.insuranceBalance(insuranceBalanceCallback);
             });
-        })
-*/
+            */
+        });
+
         contract.oracleReport(result => {
            console.log(JSON.stringify(result));
         });
@@ -100,14 +101,13 @@ import './flightsurety.css';
             } else {
                 console.log("Flight not found.");
             }
+
+            contract.insuranceBalance(insuranceBalanceCallback);
         });
-
-
-
     });
 
-    function registerFlightCallback(flight){
-        contract.registerFlight(resolveFlight(flight), () => {
+    function registerFlightCallback(flight, value){
+        contract.registerFlight(resolveFlight(flight), value, () => {
             console.log("DANONE");
         })
     }
@@ -122,8 +122,20 @@ import './flightsurety.css';
         });
     }
 
+    function insuranceBalanceCallback(error, result) {
+        if(error) {
+            console.log(error);
+        } else {
+            displayBalance(result);
+        }
+    }
+
 })();
 
+function displayBalance(value) {
+    let divBalance = DOM.elid("passangerBalance");
+    divBalance.innerHTML = value + ' ETH';
+}
 
 function displayFlightplan(flights, fetchFlightStatusCallback, registerFlightCallback) {
     let displayDiv = DOM.elid("display-wrapper");
@@ -182,24 +194,31 @@ function displayUpdateFlightplanRow(row, flight, fetchFlightStatusCallback, regi
 
     row.innerHTML = "";
 
+    let dataElementId = flight.fn + '_value';
+
     row.appendChild(DOM.div({className: 'col-sm-1 field-value', style: { margin: 'auto 0 auto 0'}}, flight.time));
     row.appendChild(DOM.div({className: 'col-sm-1 field-value', style: { margin: 'auto 0 auto 0'}}, flight.fn));
     row.appendChild(DOM.div({className: 'col-sm-2 field-value', style: { margin: 'auto 0 auto 0'}}, flight.target));
     row.appendChild(DOM.div({className: 'col-sm-2 field', style: { margin: 'auto 0 auto 0'}}, resolveStatusText(flight.status)));
 
-    let buttonFetchStatus = DOM.button({className: 'btn btn-primary', style: { margin: '5px'} }, "Fetch Status");
+    let edtValue = DOM.input({id: dataElementId, className: 'field-value', style: { margin: 'auto 5px auto 30px', width: '40px', 'text-align': 'center'}, value: '0.8'});
+    row.appendChild(edtValue);
+
+    row.appendChild(DOM.div({className: 'field-value', style: { margin: 'auto 0 auto 0', width: '40px'}}, "ETH"));
+
+    let buttonInsuring = DOM.button({className: 'btn btn-warning', style: { margin: '5px'} }, "Buy insurance");
+    buttonInsuring.addEventListener('click', () => {
+        registerFlightCallback(flight.fn, DOM.elid(dataElementId).value);
+    });
+    row.appendChild(buttonInsuring);
+
+    let buttonFetchStatus = DOM.button({className: 'btn btn-primary', style: { margin: 'auto 0 auto 40px'} }, "Fetch Status");
     buttonFetchStatus.addEventListener('click', () => {
         fetchFlightStatusCallback(flight.fn);
     });
     row.appendChild(buttonFetchStatus);
 
-    let buttonInsuring = DOM.button({className: 'btn btn-warning', style: { margin: '5px'} }, "Buy insurance");
-    buttonInsuring.addEventListener('click', () => {
-        registerFlightCallback(flight.fn);
-    });
-    row.appendChild(buttonInsuring);
 }
-
 
 function displayOperationalStatus(status) {
     let displayDiv = DOM.elid("display-wrapper-operational");

@@ -241,21 +241,6 @@ contract FlightSuretyData {
         airlines[airline].isFounded = true;
     }
 
-    function fetchInsurees
-                            (
-                                address airline,
-                                string flightNumber,
-                                uint256 timestamp
-                            )
-                            external
-                            requireIsOperational
-                            requireIsCallerAuthorized
-                            view
-                            returns (address[])
-    {
-        return insureesMap[getInsuranceKey(0x0, airline, flightNumber, timestamp)];
-    }
-
     function fetchInsureeAmount
                             (
                                 address originSender,
@@ -299,7 +284,7 @@ contract FlightSuretyData {
                             )
                             external
                             requireIsOperational
-                            //requireIsCallerAuthorized
+                            requireIsCallerAuthorized
                             requireFlightNotInsured(originSender, airline, flightNumber, timestamp)
     {
         FlightInsurance storage insurance = flightInsurances[getInsuranceKey(originSender, airline, flightNumber, timestamp)];
@@ -339,22 +324,24 @@ contract FlightSuretyData {
     */
     function creditInsurees
                                 (
-                                    address originSender,
                                     address airline,
                                     string flightNumber,
-                                    uint256 timestamp,
-                                    uint256 newAmount
+                                    uint256 timestamp
                                 )
                                 external
                                 requireIsOperational
                                 requireIsCallerAuthorized
     {
-        FlightInsurance storage insurance = flightInsurances[getInsuranceKey(originSender, airline, flightNumber, timestamp)];
+        address [] storage insurees = insureesMap[getInsuranceKey(0x0, airline, flightNumber, timestamp)];
 
-        // if instead of require so that a single mistake does not endanger the payouts of other policyholders
-        if(insurance.isInsured && !insurance.isCredited) {
-            insurance.isCredited = true;
-            insureeBalances[originSender] = newAmount;
+        for(uint i = 0; i < insurees.length; i++) {
+            FlightInsurance storage insurance = flightInsurances[getInsuranceKey(insurees[i], airline, flightNumber, timestamp)];
+
+            // if instead of require so that a single mistake does not endanger the payouts of other policyholders
+            if(insurance.isInsured && !insurance.isCredited) {
+                insurance.isCredited = true;
+                insureeBalances[insurees[i]] = insureeBalances[insurees[i]].add(insurance.amount.mul(15).div(10));//insurance.amount.mul(15).div(10);
+            }
         }
     }
 

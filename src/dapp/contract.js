@@ -86,8 +86,8 @@ export default class Contract {
         let self = this;
         let payload = {
             airline: self.owner,
-            flight: flight,
-            timestamp: Math.floor(Date.now() / 1000)
+            flight: flight.fn,
+            timestamp: flight.timestamp
         }
         self.flightSuretyApp.methods
             .fetchFlightStatus(payload.airline, payload.flight, payload.timestamp)
@@ -126,8 +126,6 @@ export default class Contract {
               console.log(error);
                 callback(error, result);
               });
-
-      console.log("REGISTER FLIGHT: " + flight);
       callback();
     }
 
@@ -135,11 +133,25 @@ export default class Contract {
       let self = this;
       self.flightSuretyApp.methods
         .insureeBalance()
-        .call({ from: self.ownerMetamask}, callback);
+        .call({ from: self.ownerMetamask}, function(error, result) {
+          if (error) {
+            console.log(error);
+          } else {
+            callback(self.web3.utils.fromWei(result, "ether"));
+          }
+        })
     }
 
     passengerWithdraw(callback) {
-      console.log("PAYOUT");
-      callback();
+      let self = this;
+      self.flightSuretyApp.methods
+        .withdraw()
+        .send({ from: self.ownerMetamask}, (error, result) => {
+          if (error) {
+            console.log(error);
+          }
+
+          callback();
+        });
     }
 }

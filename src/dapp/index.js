@@ -73,18 +73,14 @@ import './flightsurety.css';
 
             displayOperationalStatus([ { label: 'Operational Status', error: error, value: result} ]);
             displayFlightplan( available_flights, fetchFlightStatusCallback, registerFlightCallback);
+            contract.insuranceBalance(insuranceBalanceCallback);
         });
 
         // User-submitted transaction
         DOM.elid('passengerWithdraw').addEventListener('click', () => {
-
-            contract.insuranceBalance(insuranceBalanceCallback);
-
-            /*
             contract.passengerWithdraw(function() {
                 contract.insuranceBalance(insuranceBalanceCallback);
             });
-            */
         });
 
         contract.oracleReport(result => {
@@ -108,12 +104,12 @@ import './flightsurety.css';
 
     function registerFlightCallback(flight, value){
         contract.registerFlight(resolveFlight(flight), value, () => {
-            console.log("DANONE");
+            console.log("Flight registered for insurance: " + JSON.stringify(flight));
         })
     }
 
     function fetchFlightStatusCallback(flight) {
-        contract.fetchFlightStatus(flight, (error, result) => {
+        contract.fetchFlightStatus(resolveFlight(flight), (error, result) => {
             if(error) {
                 console.log(error);
             } else {
@@ -122,12 +118,8 @@ import './flightsurety.css';
         });
     }
 
-    function insuranceBalanceCallback(error, result) {
-        if(error) {
-            console.log(error);
-        } else {
-            displayBalance(result);
-        }
+    function insuranceBalanceCallback(result) {
+        displayBalance(result);
     }
 
 })();

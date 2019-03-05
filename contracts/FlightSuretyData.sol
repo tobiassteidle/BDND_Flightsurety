@@ -340,7 +340,7 @@ contract FlightSuretyData {
             // if instead of require so that a single mistake does not endanger the payouts of other policyholders
             if(insurance.isInsured && !insurance.isCredited) {
                 insurance.isCredited = true;
-                insureeBalances[insurees[i]] = insureeBalances[insurees[i]].add(insurance.amount.mul(15).div(10));//insurance.amount.mul(15).div(10);
+                insureeBalances[insurees[i]] = insureeBalances[insurees[i]].add(insurance.amount.mul(15).div(10));
             }
         }
     }

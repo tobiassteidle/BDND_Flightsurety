@@ -13,6 +13,12 @@ To install, download or clone the repo, then:
 
 ## Develop Client
 
+### Testing the Smart Contract DAPP (Ganache / Truffle / Browser / Metamask)
+Set Ganache Mnemonic to `candy maple cake sugar pudding cream honey rich smooth crumble sweet treat`  
+Increase `TOTAL ACCOUNTS TO GENERATE` to `50.`  
+Set `PORT NUMBER` to `8545`  
+(maybe) increase the `GAS LIMIT`
+
 To run truffle tests:
 
 `truffle test ./test/flightSurety.js`
@@ -58,13 +64,9 @@ Deploy the contents of the ./dapp folder
 * [Web3Js Reference](https://github.com/ethereum/wiki/wiki/JavaScript-API)
 
 
-## Testing the Smart Contract DAPP (Ganache / Truffle / Browser / Metamask)
-Set Ganache Mnemonic to `candy maple cake sugar pudding cream honey rich smooth crumble sweet treat`  
-Increase `TOTAL ACCOUNTS TO GENERATE` to `50.`  
-Set `PORT NUMBER` to `8545`  
-(maybe) increase the `GAS LIMIT`
+## Description
 
-After starting the application with the following commands:
+After starting the application with the following commands:  
 `truffle compile`  
 `truffle migrate`  
 `npm run dapp` (separate console)  
@@ -72,7 +74,7 @@ After starting the application with the following commands:
 
 Start the application be started via browser `http://localhost:8000`
 
-## Description
+
 At the top of the application you can see the current "balance".  
 This is not the account balance of the Wallet, it's the balance of the user account in the Smart Contract.  
 

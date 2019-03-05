@@ -116,7 +116,7 @@ flightSuretyApp.events.OracleRequest({
           // Submit Oracle Response
           flightSuretyApp.methods
             .submitOracleResponse(index, airline, flight, timestamp, statusCode)
-            .send({ from: oracle_accounts[idx].address }, (error, result) => {
+            .send({ from: oracle_accounts[idx].address, gas: 200000 }, (error, result) => {
               if(error) {
                 console.log(error);
               } else {

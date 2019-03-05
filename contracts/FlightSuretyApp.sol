@@ -162,7 +162,7 @@ contract FlightSuretyApp {
     function fund
                             (
                             )
-                            external
+                            public
                             payable
                             requireIsOperational
     {
@@ -194,7 +194,7 @@ contract FlightSuretyApp {
                                     string flightNumber,
                                     uint256 timestamp
                                 )
-                                external
+                                public
                                 payable
                                 requireIsOperational
                                 requireFlightNotInsured(airline, flightNumber, timestamp)
@@ -203,6 +203,7 @@ contract FlightSuretyApp {
 
         // Transfer Payment to Data Contract
         address(flightSuretyData).transfer(msg.value);
+
         flightSuretyData.buy(msg.sender, airline, flightNumber, timestamp, msg.value);
     }
 
@@ -230,7 +231,7 @@ contract FlightSuretyApp {
                                 requireIsOperational
     {
         if(statusCode == STATUS_CODE_LATE_AIRLINE) {
-            address [] memory insurees = flightSuretyData.fetchInsurees();
+            address [] memory insurees = flightSuretyData.fetchInsurees(airline, flightNumber, timestamp);
             for(uint i = 0; i < insurees.length; i++) {
                 uint256 amount = flightSuretyData.fetchInsureeAmount(insurees[i], airline, flightNumber, timestamp);
                 flightSuretyData.creditInsurees(insurees[i], airline, flightNumber, timestamp, amount.mul(15).div(10));
@@ -448,7 +449,7 @@ contract FlightSuretyData {
     function registerAirline(address originSender, address airline) external returns (bool success);
     function fundAirline(address airline) external;
 
-    function fetchInsurees() external view returns (address[]);
+    function fetchInsurees(address airline, string flightNumber, uint256 timestamp) external view returns (address[]);
     function fetchInsureeAmount(address originSender,address airline,string flightNumber,uint256 timestamp) external view returns (uint256);
 
     function insureeBalance(address originSender) external view returns (uint256);

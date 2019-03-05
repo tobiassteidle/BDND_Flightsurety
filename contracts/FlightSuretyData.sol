@@ -25,9 +25,10 @@ contract FlightSuretyData {
         uint256 amount;
     }
 
-    address [] private insurees;
     mapping(address => uint256) private insureeBalances;
     mapping(bytes32 => FlightInsurance) private flightInsurances;
+    mapping(bytes32 => address[]) private insureesMap;
+
 
     /********************************************************************************************/
     /*                                       EVENT DEFINITIONS                                  */
@@ -242,6 +243,9 @@ contract FlightSuretyData {
 
     function fetchInsurees
                             (
+                                address airline,
+                                string flightNumber,
+                                uint256 timestamp
                             )
                             external
                             requireIsOperational
@@ -249,7 +253,7 @@ contract FlightSuretyData {
                             view
                             returns (address[])
     {
-        return insurees;
+        return insureesMap[getInsuranceKey(0x0, airline, flightNumber, timestamp)];
     }
 
     function fetchInsureeAmount
@@ -295,7 +299,7 @@ contract FlightSuretyData {
                             )
                             external
                             requireIsOperational
-                            requireIsCallerAuthorized
+                            //requireIsCallerAuthorized
                             requireFlightNotInsured(originSender, airline, flightNumber, timestamp)
     {
         FlightInsurance storage insurance = flightInsurances[getInsuranceKey(originSender, airline, flightNumber, timestamp)];
@@ -303,6 +307,20 @@ contract FlightSuretyData {
         insurance.amount = amount;
 
         // Add insuree to list of all insurees (if not exists)
+        appendInsuree(originSender, airline, flightNumber, timestamp);
+    }
+
+    function appendInsuree
+                            (
+                                address originSender,
+                                address airline,
+                                string flightNumber,
+                                uint256 timestamp
+                            )
+                            internal
+                            requireIsOperational
+    {
+        address [] storage insurees = insureesMap[getInsuranceKey(0x0, airline, flightNumber, timestamp)];
         bool duplicate = false;
         for(uint256 i = 0; i < insurees.length; i++) {
             if(insurees[i] == originSender) {
@@ -310,6 +328,7 @@ contract FlightSuretyData {
                 break;
             }
         }
+
         if(!duplicate) {
             insurees.push(originSender);
         }

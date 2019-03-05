@@ -8,39 +8,7 @@ import './flightsurety.css';
 
     let result = null;
 
-
-    let available_flights = [
-        {
-            time: "09:15",
-            target: "Aberdeen",
-            fn: "BD674",
-            status: "0"
-        },
-        {
-            time: "09:45",
-            target: "Newcastle",
-            fn: "BA1326",
-            status: "0"
-        },
-        {
-            time: "09:55",
-            target: "Durham Tees",
-            fn: "GF5232",
-            status: "0"
-        },
-        {
-            time: "10:05",
-            target: "Dublin",
-            fn: "AA7991",
-            status: "0"
-        },
-        {
-            time: "10:10",
-            target: "Shannon",
-            fn: "AA8017",
-            status: "0"
-        }
-    ];
+    let available_flights = [];
 
     function resolveFlight(flightnr) {
         for(let i = 0; i < available_flights.length; i++) {
@@ -53,6 +21,51 @@ import './flightsurety.css';
 
     let contract = new Contract('localhost', () => {
         let self = this;
+
+        // Initialize flights
+        available_flights = [
+            {
+                time: "09:15",
+                timestamp: Math.floor(Date.now() / 1000),
+                target: "Aberdeen",
+                fn: "BD674",
+                airline: contract.airlines[0],
+                status: "0"
+            },
+            {
+                time: "09:45",
+                timestamp: Math.floor(Date.now() / 1000),
+                target: "Newcastle",
+                fn: "BA1326",
+                airline: contract.airlines[1],
+                status: "0"
+            },
+            {
+                time: "09:55",
+                timestamp: Math.floor(Date.now() / 1000),
+                target: "Durham Tees",
+                fn: "GF5232",
+                airline: contract.airlines[2],
+                status: "0"
+            },
+            {
+                time: "10:05",
+                timestamp: Math.floor(Date.now() / 1000),
+                target: "Dublin",
+                fn: "AA7991",
+                airline: contract.airlines[2],
+                status: "0"
+            },
+            {
+                time: "10:10",
+                timestamp: Math.floor(Date.now() / 1000),
+                target: "Shannon",
+                fn: "AA8017",
+                airline: contract.airlines[2],
+                status: "0"
+            }
+        ];
+
 
         // Read transaction
         contract.isOperational((error, result) => {
@@ -87,7 +100,6 @@ import './flightsurety.css';
             } else {
                 console.log("Flight not found.");
             }
-
         });
 
 
@@ -95,7 +107,7 @@ import './flightsurety.css';
     });
 
     function registerFlightCallback(flight){
-        contract.registerFlight(flight, () => {
+        contract.registerFlight(resolveFlight(flight), () => {
             console.log("DANONE");
         })
     }

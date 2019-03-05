@@ -78,6 +78,15 @@ export default class Contract {
 
     registerFlight(flight, callback) {
       let self = this;
+      self.flightSuretyApp.methods
+            .registerFlight(flight.airline, flight.fn, flight.timestamp)
+            .send({ from: self.passengers[0], value: "1000000000000000000"}, (error, result) => {
+              console.log(error);
+                callback(error, result);
+              });
+
+      //await config.flightSuretyApp.registerFlight(airline, flight, 0, {from: insuree, value: value, gasPrice: 0});*/
+
       console.log("REGISTER FLIGHT: " + flight);
       callback();
     }

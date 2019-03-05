@@ -191,7 +191,7 @@ function displayUpdateFlightplanRow(row, flight, fetchFlightStatusCallback, regi
     row.appendChild(DOM.div({className: 'col-sm-1 field-value', style: { margin: 'auto 0 auto 0'}}, flight.time));
     row.appendChild(DOM.div({className: 'col-sm-1 field-value', style: { margin: 'auto 0 auto 0'}}, flight.fn));
     row.appendChild(DOM.div({className: 'col-sm-2 field-value', style: { margin: 'auto 0 auto 0'}}, flight.target));
-    row.appendChild(DOM.div({className: 'col-sm-2 field', style: { margin: 'auto 0 auto 0'}}, resolveStatusText(flight.status)));
+    row.appendChild(DOM.div({className: 'col-sm-2 field', style: { margin: 'auto 0 auto 0', color: flight.status === "20" ? '#FF0000' : '#FFFFFF'}}, resolveStatusText(flight.status)));
 
     let edtValue = DOM.input({id: dataElementId, className: 'field-value', style: { margin: 'auto 5px auto 30px', width: '40px', 'text-align': 'center'}, value: '0.8'});
     row.appendChild(edtValue);

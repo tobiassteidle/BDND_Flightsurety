@@ -193,7 +193,7 @@ function displayUpdateFlightplanRow(row, flight, fetchFlightStatusCallback, regi
     });
     row.appendChild(buttonFetchStatus);
 
-    let buttonInsuring = DOM.button({className: 'btn btn-warning', style: { margin: '5px'} }, "Register insuring");
+    let buttonInsuring = DOM.button({className: 'btn btn-warning', style: { margin: '5px'} }, "Buy insurance");
     buttonInsuring.addEventListener('click', () => {
         registerFlightCallback(flight.fn);
     });

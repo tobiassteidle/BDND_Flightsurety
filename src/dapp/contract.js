@@ -121,12 +121,14 @@ export default class Contract {
     registerFlight(flight, value, callback) {
       let self = this;
       self.flightSuretyAppMetamask.methods
-            .registerFlight(flight.airline, flight.fn, flight.timestamp)
-            .send({ from: self.ownerMetamask, value: self.web3.utils.toWei(value, "ether")}, (error, result) => {
+        .registerFlight(flight.airline, flight.fn, flight.timestamp)
+        .send({ from: self.ownerMetamask, value: self.web3.utils.toWei(value, "ether")}, (error, result) => {
+            if(error) {
               console.log(error);
-                callback(error, result);
-              });
-      callback();
+            } else {
+              callback(result);
+            }
+          });
     }
 
     insuranceBalance(callback) {
